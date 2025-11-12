@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D cube</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="Canvas" width="600" height="600"></canvas>
+  <p1>Zoom: </p1>
+  <input type="range" id="slider" min="1" max="900" value="200">
+  <p1>Speed: </p1>
+  <input type="range" id="slider2" min="-5" max="5" value="0">
+  <p1>IgnoreZ</p1>
+  <input type="checkbox" id="IgnoreZToDraw">
+  <p1>TranslateYZ</p1>
+  <input type="range" id="TranslateXZ" min="-180" max="180" value="0">
+  <p1>TranslateXZ</p1>
+  <input type="range" id="TranslateYZ" min="-180" max="180" value="50">
+  <p1>PS1 Graphics</p1>
+  <input type="checkbox" id="PS1GPHC">
+  <p1>Camera angle: </p1>
+  <input type="range" id="clantXZ" min="-180" max="180" value="0">
+  <input type="range" id="clantYZ" min="-180" max="180" value="0">
+  <input type="range" id="clantXY" min="-180" max="180" value="0">
+  <p1>Camera position:</p1>
+  <input type="range" id="posX" min="-180" max="180" value="0">
+  <input type="range" id="posY" min="-180" max="180" value="50">
+  <input type="range" id="posZ" min="-180" max="180" value="50">
+  <input type="checkbox" id="gravity">
+  <script>
+	let slider = document.getElementById("slider");
+	let slider2 = document.getElementById("slider2");
+	let slider3 = document.getElementById("slider3");
+    	const canvas = document.getElementById("Canvas");
+    	const ctx = canvas.getContext("2d");
+	let cube = [
+  	{ x: -1, y: -1, z: -1 },
+  	{ x:  1, y: -1, z: -1 },
+  	{ x:  1, y:  1, z: -1 },
+  	{ x: -1, y:  1, z: -1 },
+  	{ x: -1, y: -1, z:  1 },
+  	{ x:  1, y: -1, z:  1 },
+  	{ x:  1, y:  1, z:  1 },
+  	{ x: -1, y:  1, z:  1 }
+	];
+	let triangle = [
+	{x: -1, y: 1, z: -1},
+	{x: 1, y: 1, z: -1},
+	{x: 1, y: 1, z: 1},
+	{x: -1, y: 1, z: 1},
+	{x: 0, y: -1, z: 0}
+	];
+	let plane = [
+	{x: -2, y: 1, z: 2},
+	{x: 2, y: 1, z: 2},
+	{x: 2, y: 1, z: -2},
+	{x: -2, y: 1, z: -2},
+	];
+
+	let keys = {};
+
+	document.addEventListener("keydown", e => keys[e.key] = true)
+	document.addEventListener("keyup", e => keys[e.key] = false)
+
+	let camera = {
+		x: 0,
+		y: 0,
+		z: 0,
+		camera_angle_x: 0,
+		camera_angle_y: 0,
+		camera_angle_z: 0
+	}
+
+	let PS1GPHC = document.getElementById("PS1GPHC");
+	let ignoreZ = document.getElementById("IgnoreZToDraw");
+	let trianglecheck = document.getElementById("TriangleBox");
+	let tXZ = document.getElementById("TranslateXZ");
+	let tYZ = document.getElementById("TranslateYZ");
+
+	let tempo = 0;
+
+	function rotateYZ(point, angle) {
+  		const cos = Math.cos(angle);
+  		const sin = Math.sin(angle);
+		/*let p4 = multiMatrix(p1, p2, p3)*/
+		return {
+			x: point.x,
+			y: point.y*cos-point.z*sin,
+			z: point.y*sin+point.z*cos
+		};
+	};
+	function rotateXZ(point, angle){
+		const cos = Math.cos(angle);
+		const sin = Math.sin(angle);
+
+		return {
+			x: point.x*cos-point.z*sin,
+			y: point.y,
+			z: point.x*sin+point.z*cos
+		};
+	};
+	function rotateXY(point, angle){
+		const cos = Math.cos(angle);
+		const sin = Math.sin(angle);
+		
+		return {
+			x: point.x*cos-point.y*sin,
+			y: point.x*sin+point.y*cos,
+			z: point.z
+		};
+	};
+
+	function translateXYZ(point, pos_x, pos_y, pos_z){
+		return {
+			x: point.x+pos_x,
+			y: point.y+pos_y,
+			z: point.z+pos_z
+		};
+};
+
+	function cameraTranslate(point){
+		return {
+			x: point.x+camera.x,
+			y: point.y+camera.y,
+			z: point.z+camera.z
+		};
+	};
+
+	function cameraRotateXZ(point, angle){
+		const cos = Math.cos(-angle)
+		const sin = Math.sin(-angle)
+
+		return {
+			x: point.x*cos-point.z*sin,
+			y: point.y,
+			z: point.x*sin+point.z*cos
+		};
+	};
+
+	function cameraRotateYZ(point, angle){
+		const cos = Math.cos(-angle)
+		const sin = Math.sin(-angle)
+		
+		return {
+			x: point.x,
+			y: point.y*cos-point.z*sin,
+			z: point.y*sin+point.z*cos
+		};
+	};
+
+	function cameraRotateXY(point, angle){
+		const cos = Math.cos(-angle)
+		const sin = Math.sin(-angle)
+
+		return {
+			x: point.x*cos-point.y*sin,
+			y: point.x*sin+point.y*cos,
+			z: point.z
+		};
+	};
+
+	function getNormal(p1, p2, p3){
+		const u = {
+			x: p2.x - p1.x,
+			y: p2.y - p1.y,
+			z: p2.z - p1.z
+		};
+		const v = {
+			x: p3.x - p1.x,
+			y: p3.y - p1.y,
+			z: p3.z - p1.z
+		};
+		return {
+			x: u.y*v.z - u.z*v.y,
+			y: u.z*v.x - u.x*v.z,
+			z: u.x*v.y - u.y*v.x
+		};
+	};
+
+	function dot(a, b){
+		return a.x*b.x + a.y*b.y + a.z*b.z
+	}
+
+	function getViewDir(cam){
+		const cx = Math.cos(cam.camera_angle_x)
+		const sx = Math.sin(cam.camera_angle_x)
+		const cy = Math.cos(cam.camera_angle_y)
+		const sy = Math.sin(cam.camera_angle_y)
+		const cz = Math.cos(cam.camera_angle_z)
+		const sz = Math.sin(cam.camera_angle_z)
+
+		let dir = {x: 0, y: 0, z: -1}
+
+		// Rotação em XY
+  		dir = {
+    			x: dir.x * cz - dir.y * sz,
+    			y: dir.x * sz + dir.y * cz,
+    			z: dir.z
+  		};
+
+  		// Rotação em YZ
+  		dir = {
+    			x: dir.x,
+    			y: dir.y * cy - dir.z * sy,
+    			z: dir.y * sy + dir.z * cy
+  		};
+
+  		// Rotação em XZ
+  		dir = {
+    			x: dir.x * cx - dir.z * sx,
+    			y: dir.y,
+    			z: dir.x * sx + dir.z * cx
+  		};
+
+  		return dir;
+	};
+
+	function project(point, angle){
+  		const scale = slider.value;
+  		const z = point.z;
+		if (ignoreZ.checked == false && z >= 40){
+			return 0
+		}
+		if (z <= 0){
+			return 0
+		}
+		if (PS1GPHC.checked == false){
+			return {
+				x: Math.floor((canvas.width / 2 + (point.x * scale)/z)/5)*5,
+    				y: Math.floor((canvas.height / 2 + (point.y * scale)/z)/5)*5
+			}
+		}
+  		return {
+  			x: canvas.width / 2 + (point.x * scale)/z,
+    			y: canvas.height / 2 + (point.y * scale)/z
+  		};
+	};
+	function drawCube(mesh, pos_x, pos_y, pos_z, angle_x, angle_y, angle_z, faces) {
+		const translated = mesh.map(p => translateXYZ(p, pos_x, pos_y, pos_z));
+  		const rotatedXZ = translated.map(p => rotateXZ(p, angle_x));
+		const rotatedYZ = rotatedXZ.map(p => rotateYZ(p, angle_y))
+		const rotatedXY = rotatedYZ.map(p => rotateXY(p, angle_z))
+		const cameraTranslated = rotatedXY.map(p => cameraTranslate(p, pos_x, pos_y, pos_z))
+		const cameraRotatedXZ = cameraTranslated.map(p => cameraRotateXZ(p, camera.camera_angle_x))
+		const cameraRotatedYZ = cameraRotatedXZ.map(p => cameraRotateYZ(p, camera.camera_angle_y))
+		const cameraRotatedXY = cameraRotatedYZ.map(p => cameraRotateXY(p, camera.camera_angle_z))
+  		const projected = cameraRotatedXY.map(project);
+
+  		ctx.beginPath();
+  		faces.forEach(([a, b, c]) => {
+			const N = getNormal(rotatedXY[a], rotatedXY[b], rotatedXY[c])
+			const cameraDir = getViewDir(camera)
+			if (dot(N, cameraDir) < 0) {
+				ctx.beginPath()
+				ctx.globalAlpha = 1
+				ctx.strokeStyle = "rgb(0, 0, 255)"
+				ctx.moveTo(projected[a].x, projected[a].y);
+   				ctx.lineTo(projected[b].x, projected[b].y);	
+				ctx.lineTo(projected[c].x, projected[c].y);
+				ctx.stroke()
+				ctx.beginPath();
+				ctx.globalAlpha = 0.5
+				ctx.strokeStyle = "rgb(0, 0, 0)";
+				/*ctx.fillStyle = "rgb(" + camera.camera_angle_x + ", 0, 0)"*/
+   				ctx.moveTo(projected[a].x, projected[a].y);
+   				ctx.lineTo(projected[b].x, projected[b].y);	
+				ctx.lineTo(projected[c].x, projected[c].y);
+				ctx.lineTo(projected[a].x, projected[a].y);
+				ctx.fill();
+				ctx.stroke();
+			};
+  		});
+	};
+
+	function createPlane(int){
+		let mn1 = 0;
+		let mn2 = 0;
+		for (i=0; i < int; i++){
+			faces = [
+  		  		[0,1,2],[2,3,0],
+  			];
+			drawCube(plane, mn1, 0, mn2, 0, 0, 0, faces)
+			if (mn2 < mn1) {
+				mn1 = 0;
+				mn2 += 4;
+			}else{
+				mn1 += 4;
+			}
+		}
+	}
+
+	canvas.addEventListener('mousemove', function(event) {
+		const rect = canvas.getBoundingClientRect()
+		
+		const mouseX = event.clientX - rect.left
+		const mouseY = event.clientY - rect.top
+		camera.camera_angle_x = (1.5-mouseX*3.14/180)
+		camera.camera_angle_y = (1.5-mouseY*3.14/180)
+	}, false)
+
+	let angle = 0;
+	let grav = 0;
+	function animate() {
+		/*camera.z = document.getElementById("posZ").value/5*/
+		camera.camera_angle_z = document.getElementById("clantXY").value*3.14/180
+		/*camera.x = document.getElementById("posX").value/5*/
+		/*camera.y = document.getElementById("posY").value/5*/
+		if (keys["ArrowUp"]) camera.z += 1;
+		if (keys["ArrowDown"]) camera.z -= 1;
+		if (keys["ArrowLeft"]) camera.x -= 1;
+		if (keys["ArrowRight"]) camera.x += 1;
+		if (keys[" "]) camera.y += 1;
+		if (gravity.checked == true) {
+			camera.y = document.getElementById("posY").value/5-grav*20
+			grav = grav+0.02
+		}else{
+			grav = 0
+		}
+		/*{ x: -1, y: -1, z: -1 },
+  		{ x:  1, y: -1, z: -1 },
+  		{ x:  1, y:  1, z: -1 },
+  		{ x: -1, y:  1, z: -1 },
+  		{ x: -1, y: -1, z:  1 },
+  		{ x:  1, y: -1, z:  1 },
+  		{ x:  1, y:  1, z:  1 },
+  		{ x: -1, y:  1, z:  1 }*/
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		createPlane(220)
+		faces = [
+  		  	[0,1,2],[2,3,0],
+			[7,6,5],[5,4,7],
+			[4,5,1],[1,0,4],[3,2,6],[6,7,3],
+			[0,3,7],[7,4,0],[5,6,2],[2,1,5]
+  		];
+		drawCube(cube, 0, 0, 0, tXZ.value*3.14/180+angle, tYZ.value*3.14/180, 0, faces);
+		/*faces = [
+  		  	[0,1,2],[2,3,0],
+			[0,4,1],[1,4,2],[2,4,3]
+  		];
+		drawCube(triangle, 0, -2.4+Math.sin(angle*4)/4, 0, 0, 0, 0, faces);*/
+		/**/
+		angle += (0.02+slider2.value/100);
+  		/*angle = (1-0.08)*angle+0.08*(slider2.value);*/
+		tempo += 0.1
+  		requestAnimationFrame(animate);
+	}
+	camera.y = document.getElementById("posY").value/5
+  	animate();
+
+	
+
+
+  </script>
+</body>
+</html>
