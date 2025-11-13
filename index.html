@@ -199,21 +199,21 @@
 
 		let dir = {x: 0, y: 0, z: -1}
 
-		// Rotação em XY
+
   		dir = {
     			x: dir.x * cz - dir.y * sz,
     			y: dir.x * sz + dir.y * cz,
     			z: dir.z
   		};
 
-  		// Rotação em YZ
+
   		dir = {
     			x: dir.x,
     			y: dir.y * cy - dir.z * sy,
     			z: dir.y * sy + dir.z * cy
   		};
 
-  		// Rotação em XZ
+		
   		dir = {
     			x: dir.x * cx - dir.z * sx,
     			y: dir.y,
