@@ -20,20 +20,8 @@
   <input type="range" id="slider2" min="-5" max="5" value="0">
   <p1>IgnoreZ</p1>
   <input type="checkbox" id="IgnoreZToDraw">
-  <p1>TranslateYZ</p1>
-  <input type="range" id="TranslateXZ" min="-180" max="180" value="0">
-  <p1>TranslateXZ</p1>
-  <input type="range" id="TranslateYZ" min="-180" max="180" value="50">
   <p1>PS1 Graphics</p1>
   <input type="checkbox" id="PS1GPHC">
-  <p1>Camera angle: </p1>
-  <input type="range" id="clantXZ" min="-180" max="180" value="0">
-  <input type="range" id="clantYZ" min="-180" max="180" value="0">
-  <input type="range" id="clantXY" min="-180" max="180" value="0">
-  <p1>Camera position:</p1>
-  <input type="range" id="posX" min="-180" max="180" value="0">
-  <input type="range" id="posY" min="-180" max="180" value="50">
-  <input type="range" id="posZ" min="-180" max="180" value="50">
   <input type="checkbox" id="gravity">
   <script>
 	let slider = document.getElementById("slider");
@@ -82,8 +70,7 @@
 	let PS1GPHC = document.getElementById("PS1GPHC");
 	let ignoreZ = document.getElementById("IgnoreZToDraw");
 	let trianglecheck = document.getElementById("TriangleBox");
-	let tXZ = document.getElementById("TranslateXZ");
-	let tYZ = document.getElementById("TranslateYZ");
+	let transitionZ = 10;
 
 	let tempo = 0;
 
@@ -199,21 +186,21 @@
 
 		let dir = {x: 0, y: 0, z: -1}
 
-
+		// Rotação em XY
   		dir = {
     			x: dir.x * cz - dir.y * sz,
     			y: dir.x * sz + dir.y * cz,
     			z: dir.z
   		};
 
-
+  		// Rotação em YZ
   		dir = {
     			x: dir.x,
     			y: dir.y * cy - dir.z * sy,
     			z: dir.y * sy + dir.z * cy
   		};
 
-		
+  		// Rotação em XZ
   		dir = {
     			x: dir.x * cx - dir.z * sx,
     			y: dir.y,
@@ -233,11 +220,13 @@
 			return 0
 		}
 		if (PS1GPHC.checked == false){
+			transitionZ = 10;
 			return {
-				x: Math.floor((canvas.width / 2 + (point.x * scale)/z)/5)*5,
-    				y: Math.floor((canvas.height / 2 + (point.y * scale)/z)/5)*5
+				x: Math.floor((canvas.width / 2 + (point.x * scale))/2)*2,
+    				y: Math.floor((canvas.height / 2 + (point.y * scale))/2)*2
 			}
 		}
+		transitionZ = 200;
   		return {
   			x: canvas.width / 2 + (point.x * scale)/z,
     			y: canvas.height / 2 + (point.y * scale)/z
@@ -245,6 +234,11 @@
 	};
 	function drawCube(mesh, pos_x, pos_y, pos_z, angle_x, angle_y, angle_z, faces) {
 		const translated = mesh.map(p => translateXYZ(p, pos_x, pos_y, pos_z));
+		/*const tN = getNormal(translated[0], translated[1], translated[2]);
+		const tcameraDir = getViewDir(camera);
+		if (dot(tN,tcameraDir) > 0){
+			return 0
+		};*/
   		const rotatedXZ = translated.map(p => rotateXZ(p, angle_x));
 		const rotatedYZ = rotatedXZ.map(p => rotateYZ(p, angle_y))
 		const rotatedXY = rotatedYZ.map(p => rotateXY(p, angle_z))
@@ -261,7 +255,7 @@
 			if (dot(N, cameraDir) < 0) {
 				ctx.beginPath()
 				ctx.globalAlpha = 1
-				ctx.strokeStyle = "rgb(0, 0, 255)"
+				ctx.strokeStyle = "rgb(" + 255 + "," + 0 + "," + 255 + ")"
 				ctx.moveTo(projected[a].x, projected[a].y);
    				ctx.lineTo(projected[b].x, projected[b].y);	
 				ctx.lineTo(projected[c].x, projected[c].y);
@@ -293,9 +287,80 @@
 				mn2 += 4;
 			}else{
 				mn1 += 4;
-			}
-		}
-	}
+			};
+		};
+	};
+	
+	
+	function createHouse(x, y, z){
+		faces = [
+  		  	[0,1,2],[2,3,0],
+			[7,6,5],[5,4,7],
+			[4,5,1],[1,0,4],[3,2,6],[6,7,3],
+			[0,3,7],[7,4,0],[5,6,2],[2,1,5]
+  		];
+		drawCube(cube, x, y, z, 0, 0, 0, faces);
+		drawCube(cube, x, y, z+2, 0, 0, 0, faces);
+		drawCube(cube, x, y, z+4, 0, 0, 0, faces);
+		drawCube(cube, x, y, z+6, 0, 0, 0, faces);
+		drawCube(cube, x, y, z+8, 0, 0, 0, faces);
+		drawCube(cube, x, y, z+10, 0, 0, 0, faces);
+		drawCube(cube, x, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+2, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+4, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+6, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+8, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+10, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+12, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+14, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+16, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+18, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+20, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z+10, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z+8, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z+6, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z+4, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z+2, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z-2, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z-4, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z-6, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z-8, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z-10, 0, 0, 0, faces);
+		drawCube(cube, x+22, y, z-12, 0, 0, 0, faces);
+		drawCube(cube, x, y-2, z, 0, 0, 0, faces);
+		drawCube(cube, x, y-2, z+2, 0, 0, 0, faces);
+		drawCube(cube, x, y-2, z+4, 0, 0, 0, faces);
+		drawCube(cube, x, y-2, z+6, 0, 0, 0, faces);
+		drawCube(cube, x, y-2, z+8, 0, 0, 0, faces);
+		drawCube(cube, x, y-2, z+10, 0, 0, 0, faces);
+		drawCube(cube, x, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+2, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+4, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+6, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+8, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+10, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+12, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+14, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+16, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+18, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+20, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z+12, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z+10, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z+8, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z+6, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z+4, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z+2, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z-2, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z-4, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z-6, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z-8, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z-10, 0, 0, 0, faces);
+		drawCube(cube, x+22, y-2, z-12, 0, 0, 0, faces);
+	};
+
 
 	canvas.addEventListener('mousemove', function(event) {
 		const rect = canvas.getBoundingClientRect()
@@ -309,17 +374,13 @@
 	let angle = 0;
 	let grav = 0;
 	function animate() {
-		/*camera.z = document.getElementById("posZ").value/5*/
-		camera.camera_angle_z = document.getElementById("clantXY").value*3.14/180
-		/*camera.x = document.getElementById("posX").value/5*/
-		/*camera.y = document.getElementById("posY").value/5*/
 		if (keys["ArrowUp"]) camera.z += 1;
 		if (keys["ArrowDown"]) camera.z -= 1;
 		if (keys["ArrowLeft"]) camera.x -= 1;
 		if (keys["ArrowRight"]) camera.x += 1;
 		if (keys[" "]) camera.y += 1;
 		if (gravity.checked == true) {
-			camera.y = document.getElementById("posY").value/5-grav*20
+			camera.y = camera.y-grav*10
 			grav = grav+0.02
 		}else{
 			grav = 0
@@ -333,14 +394,15 @@
   		{ x:  1, y:  1, z:  1 },
   		{ x: -1, y:  1, z:  1 }*/
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		createPlane(220)
+		createPlane(1000)
+		createHouse(0, 0, 16)
 		faces = [
   		  	[0,1,2],[2,3,0],
 			[7,6,5],[5,4,7],
 			[4,5,1],[1,0,4],[3,2,6],[6,7,3],
 			[0,3,7],[7,4,0],[5,6,2],[2,1,5]
   		];
-		drawCube(cube, 0, 0, 0, tXZ.value*3.14/180+angle, tYZ.value*3.14/180, 0, faces);
+		drawCube(cube, 0, 0, 0, angle, 0, 0, faces);
 		/*faces = [
   		  	[0,1,2],[2,3,0],
 			[0,4,1],[1,4,2],[2,4,3]
@@ -350,9 +412,10 @@
 		angle += (0.02+slider2.value/100);
   		/*angle = (1-0.08)*angle+0.08*(slider2.value);*/
 		tempo += 0.1
+		slider.value = (1-0.1)*slider.value+0.1*transitionZ
   		requestAnimationFrame(animate);
 	}
-	camera.y = document.getElementById("posY").value/5
+	camera.y = 10
   	animate();
 
 	
