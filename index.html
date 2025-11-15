@@ -232,7 +232,7 @@
     			y: canvas.height / 2 + (point.y * scale)/z
   		};
 	};
-	function drawCube(mesh, pos_x, pos_y, pos_z, angle_x, angle_y, angle_z, faces) {
+	function drawCube(mesh, pos_x, pos_y, pos_z, angle_x, angle_y, angle_z, faces, colortable) {
 		const translated = mesh.map(p => translateXYZ(p, pos_x, pos_y, pos_z));
 		/*const tN = getNormal(translated[0], translated[1], translated[2]);
 		const tcameraDir = getViewDir(camera);
@@ -253,23 +253,32 @@
 			const N = getNormal(rotatedXY[a], rotatedXY[b], rotatedXY[c])
 			const cameraDir = getViewDir(camera)
 			if (dot(N, cameraDir) < 0) {
-				ctx.beginPath()
+				/*ctx.beginPath()
 				ctx.globalAlpha = 1
-				ctx.strokeStyle = "rgb(" + 255 + "," + 0 + "," + 255 + ")"
+				ctx.strokeStyle = "rgb(255, 0, 255)"
 				ctx.moveTo(projected[a].x, projected[a].y);
    				ctx.lineTo(projected[b].x, projected[b].y);	
 				ctx.lineTo(projected[c].x, projected[c].y);
-				ctx.stroke()
+				ctx.stroke()*/
 				ctx.beginPath();
-				ctx.globalAlpha = 0.5
+				/*ctx.globalAlpha = 0.5*/
 				ctx.strokeStyle = "rgb(0, 0, 0)";
-				/*ctx.fillStyle = "rgb(" + camera.camera_angle_x + ", 0, 0)"*/
+				ctx.fillStyle = "rgb(0, 0, 0)"
+				if (colortable != null) {
+					if (colortable[a] != null && colortable[b] != null && colortable[c] != null) {
+						let intersity = Math.max(0, -dot(N, cameraDir))
+						let colorr = colortable[a] * intersity
+						let colorg = colortable[b] * intersity
+						let colorb = colortable[c] * intersity
+						ctx.fillStyle = `rgb(${colorr}, ${colorg}, ${colorb})`;
+					};
+				};
    				ctx.moveTo(projected[a].x, projected[a].y);
    				ctx.lineTo(projected[b].x, projected[b].y);	
 				ctx.lineTo(projected[c].x, projected[c].y);
 				ctx.lineTo(projected[a].x, projected[a].y);
 				ctx.fill();
-				ctx.stroke();
+				/*ctx.stroke();*/
 			};
   		});
 	};
@@ -379,6 +388,7 @@
 		if (keys["ArrowLeft"]) camera.x -= 1;
 		if (keys["ArrowRight"]) camera.x += 1;
 		if (keys[" "]) camera.y += 1;
+		if (keys["Control"]) camera.y -= 1;
 		if (gravity.checked == true) {
 			camera.y = camera.y-grav*10
 			grav = grav+0.02
@@ -402,7 +412,8 @@
 			[4,5,1],[1,0,4],[3,2,6],[6,7,3],
 			[0,3,7],[7,4,0],[5,6,2],[2,1,5]
   		];
-		drawCube(cube, 0, 0, 0, angle, 0, 0, faces);
+		colortable = [255, 0, 0, 0, 255, 0, 255, 255, 255];
+		drawCube(cube, 0, 0, 0, angle, 0, 0, faces, colortable);
 		/*faces = [
   		  	[0,1,2],[2,3,0],
 			[0,4,1],[1,4,2],[2,4,3]
@@ -413,6 +424,7 @@
   		/*angle = (1-0.08)*angle+0.08*(slider2.value);*/
 		tempo += 0.1
 		slider.value = (1-0.1)*slider.value+0.1*transitionZ
+		/*console.log((camera.x-0)^2+(camera.y-0)^2+(camera.z-0)^2)*/
   		requestAnimationFrame(animate);
 	}
 	camera.y = 10
