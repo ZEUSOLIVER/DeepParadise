@@ -20,10 +20,11 @@
   <input type="range" id="slider2" min="-5" max="5" value="0">
   <p1>IgnoreZ</p1>
   <input type="checkbox" id="IgnoreZToDraw">
-  <p1>PS1 Graphics</p1>
+  <p1>Chance Pespective</p1>
   <input type="checkbox" id="PS1GPHC">
   <input type="checkbox" id="gravity">
-  <img src="island-gb9b4cf506_1280-768x539.webp" id="image" hidden>
+  <img src="https://tse4.mm.bing.net/th/id/OIP.-SQyHJsm3Fo7kRvEqdIdrAHaEK?rs=1&pid=ImgDetMain&o=7&rm=3" id="image" hidden>
+  <img src="https://th.bing.com/th/id/R.f007245212d7c01261b22eb5f0372ffd?rik=ODD8Sp2FB%2b7N3Q&pid=ImgRaw&r=0" id="image2" hidden>
   <script>
 	let slider = document.getElementById("slider");
 	let slider2 = document.getElementById("slider2");
@@ -63,7 +64,7 @@
 		x: 0,
 		y: 0,
 		z: 0,
-		camera_angle_x: 0,
+		camera_angle_x: 90,
 		camera_angle_y: 0,
 		camera_angle_z: 0
 	}
@@ -72,6 +73,8 @@
 	let ignoreZ = document.getElementById("IgnoreZToDraw");
 	let trianglecheck = document.getElementById("TriangleBox");
 	let transitionZ = 10;
+	let negativeDepth = 0;
+	let nd = 0;
 
 	let tempo = 0;
 
@@ -217,20 +220,22 @@
 		if (ignoreZ.checked == false && z >= 40){
 			return 0
 		}
-		if (z <= 0){
+		if (z <= negativeDepth){
 			return 0
 		}
-		if (PS1GPHC.checked == false){
+		if (PS1GPHC.checked == true){
 			transitionZ = 10;
+			nd = -20;
 			return {
 				x: Math.floor((canvas.width / 2 + (point.x * scale))/2)*2,
     				y: Math.floor((canvas.height / 2 + (point.y * scale))/2)*2
 			}
 		}
+		nd = 0;
 		transitionZ = 200;
   		return {
-  			x: canvas.width / 2 + (point.x * scale)/z,
-    			y: canvas.height / 2 + (point.y * scale)/z
+  			x: Math.floor((canvas.width / 2 + (point.x * scale)/z)/2)*2,
+    			y: Math.floor((canvas.height / 2 + (point.y * scale)/z)/2)*2
   		};
 	};
 	function drawCube(mesh, pos_x, pos_y, pos_z, angle_x, angle_y, angle_z, faces, colortable) {
@@ -320,6 +325,7 @@
 			ctx.fillStyle = "rgb(0, 0, 0)"
 			if (colortable != null) {
 				if (colortable[a] != null && colortable[b] != null && colortable[c] != null) {
+					/*let intersity = 1;*/
 					let intersity = 1-Math.max(0, getDistance(translated[a].x, translated[a].y, translated[a].z, -camera.x, camera.y, -camera.z))/40
 					let colorr = colortable[a] * intersity
 					let colorg = colortable[b] * intersity
@@ -346,7 +352,7 @@
 			if (getDistance(mn1, 0, mn2, camera.x, camera.y, camera.z) > 44){
 				
 			}else{
-				drawMesh(plane, -mn1, 0, -mn2, 0, 0, 0, faces, [0, 255, 0])
+				drawMesh(plane, -mn1, 0, -mn2, 0, 0, 0, faces, [0, 0, 128, 155, 0])
 			};
 			if (mn1 == 256) {
 				mn1 = 0;
@@ -440,10 +446,10 @@
 	let angle = 0;
 	let grav = 0;
 	function animate() {
-		if (keys["ArrowUp"]) camera.z += 1;
-		if (keys["ArrowDown"]) camera.z -= 1;
-		if (keys["ArrowLeft"]) camera.x -= 1;
-		if (keys["ArrowRight"]) camera.x += 1;
+		if (keys["ArrowUp"]) camera.z += 0.5;
+		if (keys["ArrowDown"]) camera.z -= 0.5;
+		if (keys["ArrowLeft"]) camera.x -= 0.5;
+		if (keys["ArrowRight"]) camera.x += 0.5;
 		if (keys[" "]) camera.y += 1;
 		if (keys["Control"]) camera.y -= 1;
 		if (gravity.checked == true) {
@@ -482,10 +488,13 @@
   		/*angle = (1-0.08)*angle+0.08*(slider2.value);*/
 		tempo += 0.1
 		slider.value = (1-0.1)*slider.value+0.1*transitionZ
+		negativeDepth = (1-0.1)*negativeDepth+0.1*nd
 		/*console.log((camera.x-0)^2+(camera.y-0)^2+(camera.z-0)^2)*/
   		requestAnimationFrame(animate);
 	}
-	camera.y = 10
+	camera.x = 40;
+	camera.y = 3;
+	camera.z = 10;
   	animate();
 
 	
