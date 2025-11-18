@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D cube</title>
+  <title>DeepParadise</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
     }
+    canvas { border: 1px solid #ccc; background: transparent; }
   </style>
 </head>
 <body>
   <canvas id="Canvas" width="600" height="600" ></canvas>
-  /*<canvas id="CanvasUpscale" width="640" height="480"></canvas>*/
+  <canvas id="CanvasUpscale" width="10" height="10"></canvas>
   <p1>Zoom: </p1>
   <input type="range" id="slider" min="1" max="900" value="200">
   <p1>Speed: </p1>
@@ -25,7 +26,7 @@
   <input type="checkbox" id="PS1GPHC">
   <input type="checkbox" id="gravity">
   <img src="https://wallpaperaccess.com/full/83995.jpg" id="image" hidden>
-  <img src="https://th.bing.com/th/id/R.f007245212d7c01261b22eb5f0372ffd?rik=ODD8Sp2FB%2b7N3Q&pid=ImgRaw&r=0" id="image2" hidden>
+  <img src="235672.png" id="image2" hidden>
   <script>
 	let slider = document.getElementById("slider");
 	let slider2 = document.getElementById("slider2");
@@ -64,6 +65,7 @@
 	document.addEventListener("keyup", e => keys[e.key] = false)
 
 	ctxUpscale.imageSmoothingEnabled = false;
+	ctx.imageSmoothingEnabled = false;
 
 	let camera = {
 		x: 0,
@@ -214,7 +216,7 @@
 		}
 		if (z <= negativeDepth){
 			return 0
-		}
+		};
 		if (PS1GPHC.checked == true){
 			transitionZ = 10;
 			nd = -20;
@@ -230,6 +232,38 @@
     			y: Math.floor((canvas.height / 2 + (point.y * scale)/z)/2)*2
   		};
 	};
+
+	function projectPlane(point, angle){
+		const scale = slider.value;
+  		const z = point.z;
+		if (ignoreZ.checked == false && z >= 40){
+			return 0
+		}
+		if (z <= 0 && z >= -4){
+			return {
+				x: Math.floor((canvas.width / 2 + (point.x * scale))/2)*2,
+    				y: Math.floor((canvas.height / 2 + (point.y * scale))/2)*2
+			};
+		};
+		if (z <= negativeDepth){
+			return 0
+		};
+		if (PS1GPHC.checked == true){
+			transitionZ = 10;
+			nd = -20;
+			return {
+				x: Math.floor((canvas.width / 2 + (point.x * scale))/2)*2,
+    				y: Math.floor((canvas.height / 2 + (point.y * scale))/2)*2
+			}
+		}
+		nd = 0;
+		transitionZ = 200;
+  		return {
+  			x: Math.floor((canvas.width / 2 + (point.x * scale)/z)/2)*2,
+    			y: Math.floor((canvas.height / 2 + (point.y * scale)/z)/2)*2
+  		};
+	};
+
 	function drawCube(mesh, pos_x, pos_y, pos_z, angle_x, angle_y, angle_z, faces, colortable) {
 		const translated = mesh.map(p => translateXYZ(p, pos_x, pos_y, pos_z));
 		if (getDistance(translated[0].x, translated[1].y, translated[2].z, -camera.x, -camera.y, -camera.z) > 44){
@@ -300,7 +334,7 @@
 		const cameraRotatedXZ = cameraTranslated.map(p => cameraRotateXZ(p, camera.camera_angle_x))
 		const cameraRotatedYZ = cameraRotatedXZ.map(p => cameraRotateYZ(p, camera.camera_angle_y))
 		const cameraRotatedXY = cameraRotatedYZ.map(p => cameraRotateXY(p, camera.camera_angle_z))
-  		const projected = cameraRotatedXY.map(project);
+  		const projected = cameraRotatedXY.map(projectPlane);
 
   		ctx.beginPath();
   		faces.forEach(([a, b, c]) => {
@@ -486,6 +520,7 @@
 			[0,4,1],[1,4,2],[2,4,3]
   		];
 		drawCube(triangle, 0, -2.4+Math.sin(angle*4)/4, 0, 0, 0, 0, faces);*/
+		ctx.drawImage(document.getElementById("image2"), canvas.width/4, canvas.height/2, canvas.width/2, canvas.height/2)
 		/*ctxUpscale.clearRect(0,0,canvasUpscale.width, canvasUpscale.height)
 		ctxUpscale.drawImage(canvas, 0, 0, canvasUpscale.width, canvasUpscale.height)*/
 		/**/
